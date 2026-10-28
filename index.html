@@ -63,6 +63,25 @@ button:focus-visible{outline:3px solid var(--sign);outline-offset:2px}
 .res-note{margin:12px 0 0;font-weight:700;font-size:14px}
 .sign.fail{background:#e7ddc6}
 .sign.fail h1{color:var(--chili)}
+.entry{display:flex;gap:8px;margin-top:16px}
+.entry input{flex:1;min-width:0;font:700 16px var(--body);padding:10px 12px;border-radius:10px;border:2px solid var(--ink);background:#fffaf0;color:var(--ink)}
+.entry button{font:900 15px var(--body);background:var(--ink);color:var(--sign);border:0;border-radius:10px;padding:0 14px;cursor:pointer;white-space:nowrap}
+.entry button:disabled{opacity:.5}
+.send-msg{margin:8px 0 0;font-weight:700;font-size:13px;min-height:1.2em}
+.tabs{display:flex;gap:4px;justify-content:center;margin-top:12px}
+.tabs button{font:900 14px var(--body);border:2px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--sign)}
+.rlist{list-style:none;margin:12px 0 0;padding:0;max-height:min(52vh,420px);overflow-y:auto;text-align:left;border-top:2px solid var(--ink)}
+.rlist li{display:grid;grid-template-columns:28px 1fr auto 34px;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px solid rgba(27,18,12,.25)}
+.rlist .no{font-family:var(--disp);font-size:16px;text-align:center}
+.rlist .nm{font-weight:900;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rlist .nm small{display:block;font-weight:700;font-size:11px;opacity:.75;font-variant-numeric:tabular-nums}
+.rlist .sc{font-family:var(--disp);font-size:17px;font-variant-numeric:tabular-nums}
+.rlist .pl{width:32px;height:32px;border-radius:50%;border:0;background:var(--chili);color:#fff;font-size:12px;cursor:pointer}
+.rlist .me .nm{color:var(--chili)}
+.rempty{padding:18px 0;font-weight:700;text-align:center}
+#rpBar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
+#rpBar button{font:900 16px var(--body);background:rgba(27,18,12,.85);color:var(--paper);border:1px solid rgba(246,236,210,.3);border-radius:999px;padding:10px 22px;cursor:pointer}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .4s}
 #loading{position:absolute;inset:0;display:grid;place-items:center;font-weight:900;color:var(--paper)}
 @media (prefers-reduced-motion:reduce){#flash{transition:none}}
@@ -102,6 +121,7 @@ button:focus-visible{outline:3px solid var(--sign);outline-offset:2px}
         <li><b>4</b><span>落としたらちゃぶ台返し。点数は 高さ×重さ</span></li>
       </ul>
       <button class="big" id="start">店に立つ</button>
+      <button class="big alt" id="titleRank">ランキング</button>
     </div>
   </div>
 
@@ -112,9 +132,23 @@ button:focus-visible{outline:3px solid var(--sign);outline-offset:2px}
       <div class="res-line" id="resLine"></div>
       <div class="res-score" id="resScore"></div>
       <p class="res-note" id="resNote"></p>
+      <div id="entryBox" hidden>
+        <div class="entry"><input id="name" maxlength="12" placeholder="名前（12文字まで）" autocomplete="nickname"><button id="send">登録</button></div>
+        <p class="send-msg" id="sendMsg"></p>
+      </div>
       <button class="big" id="again">もう一杯</button>
+      <button class="big alt" id="resRankBtn">ランキングを見る</button>
     </div>
   </div>
+  <div class="overlay" id="rank" hidden>
+    <div class="sign">
+      <p class="res-rank" style="margin:0">盛り番付</p>
+      <div class="tabs" role="group" aria-label="期間"><button id="tabDay" aria-pressed="true">今日</button><button id="tabAll" aria-pressed="false">全期間</button></div>
+      <ol class="rlist" id="rlist"></ol>
+      <button class="big alt" id="rankClose">とじる</button>
+    </div>
+  </div>
+  <div id="rpBar" hidden><button id="rpBack">もどる</button></div>
   <div id="loading">仕込み中…</div>
 </div>
 
@@ -468,7 +502,7 @@ world.addBody(bowlBody);
 world.addEventListener('postStep', () => {
   updateLinks();
   for (const cl of clumps) {
-    const b = cl.body; if (!b || b.sleepState === CANNON.Body.SLEEPING) continue;
+    const b = cl.body; if (!b || !b.world || b.sleepState === CANNON.Body.SLEEPING) continue;
     const rv = b.velocity.vsub(bowlBody.velocity), sp = rv.length();
     if (sp < 6) {
       const k = sp < 2.5 ? .82 : .93;
@@ -600,6 +634,7 @@ function growHeld(h, count) {
 }
 function dropHeld(h) {
   for (const pc of h.pieces) {
+    pc.grab = rec.grabs; pc.tm = gameT;
     const wp = pc.lp.clone().applyQuaternion(h.quat).add(h.pos), wq = h.quat.clone().multiply(pc.lq);
     const he = halfExt(pc);
     const b = new CANNON.Body({ mass: pc.grams * .05, linearDamping: .08, angularDamping: .75, allowSleep: true, sleepSpeedLimit: 1.5, sleepTimeLimit: .35 });
@@ -608,6 +643,13 @@ function dropHeld(h) {
     b.velocity.set(bowlBody.velocity.x, -6, bowlBody.velocity.z);
     b.isPiece = true; b.glue = TYPES[pc.type].glue; world.addBody(b); pc.body = b; clumps.push(pc);
   }
+  rec.grabs++;
+}
+const rec = { grabs: 0, carry: [], acc: 0 };
+let gameT = 0;
+function snapPieces(key) {
+  const bp = bowlBody.position;
+  for (const pc of clumps) { const b = pc.body; pc[key] = [b.position.x - bp.x, b.position.y - bp.y, b.position.z - bp.z, b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w]; }
 }
 // もやしのからみ：落ち着いた束どうし（と麺）を弱い糸でつなぐ。強く引っぱられると切れる
 const links = [], linked = new Set(), linkN = new Map();
@@ -643,6 +685,7 @@ const sphW = [];
 function cacheSpheres() {
   sphW.length = 0;
   for (const pc of clumps) {
+    if (pc.hide) continue;
     const b = pc.body, T = TYPES[pc.type]; _q.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w);
     for (const k of [-.7, 0, .7]) { _c.set(k * T.hx, 0, 0).applyQuaternion(_q); sphW.push({ x: b.position.x + _c.x, y: b.position.y + _c.y, z: b.position.z + _c.z, r: Math.max(T.hy, T.hz) }); }
   }
@@ -657,6 +700,7 @@ function measure() {
   let top = -1e9, g = 0;
   const bp = bowlBody.position;
   for (const pc of clumps) {
+    if (pc.hide) continue;
     g += pc.grams;
     const b = pc.body, he = halfExt(pc); _q.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w);
     for (let i = 0; i < 8; i++) { _c.set(i & 1 ? he.x : -he.x, i & 2 ? he.y : -he.y, i & 4 ? he.z : -he.z).applyQuaternion(_q); top = Math.max(top, b.position.y + _c.y); }
@@ -760,9 +804,17 @@ const carry = { pT: 0, settle: 0, tJudge: 0, ax: 0, ay: 0, az: 0 };
 let hintTimer = 0;
 function setHint(t) { const h = $('#hint'); h.textContent = t; h.hidden = !t; }
 function flashHint(t) { setHint(t); hintTimer = 1.6; }
-function startGame() {
+function clearScene() {
   clearLinks(); glueOn = true;
-  for (const cl of clumps) world.removeBody(cl.body);
+  for (const cl of clumps) if (cl.body && cl.body.world) world.removeBody(cl.body);
+  clumps.length = 0; held = null;
+  rec.grabs = 0; rec.carry = []; rec.acc = 0; gameT = 0; rp = null;
+  bowlBody.type = CANNON.Body.KINEMATIC; bowlBody.mass = 0; bowlBody.updateMassProperties();
+  bowlBody.position.set(0, 0, 0); bowlBody.quaternion.set(0, 0, 0, 1); bowlBody.velocity.set(0, 0, 0); bowlBody.angularVelocity.set(0, 0, 0);
+  $('#rpBar').hidden = true;
+}
+function startGame() {
+  clearScene();
   clumps.length = 0; held = null;
   bowlBody.type = CANNON.Body.KINEMATIC; bowlBody.mass = 0; bowlBody.updateMassProperties();
   bowlBody.position.set(0, 0, 0); bowlBody.quaternion.set(0, 0, 0, 1); bowlBody.velocity.set(0, 0, 0); bowlBody.angularVelocity.set(0, 0, 0);
@@ -777,6 +829,7 @@ $('#start').onclick = () => { audioOn(); startGame(); };
 $('#again').onclick = () => startGame();
 $('#serve').onclick = () => {
   if (phase !== 'build' || !clumps.length || held) return;
+  snapPieces('s1');
   phase = 'carry'; world.allowSleep = false; for (const cl of clumps) cl.body.wakeUp();
   $('.tools').hidden = true; $('#serve').hidden = true;
   setHint('指を上にすべらせて、カウンター越しに運ぶ'); camGoal = 'carry';
@@ -827,14 +880,19 @@ function showResult(ok, why) {
     $('#resLine').innerHTML = `高さ <b>${m.h.toFixed(1)}</b>cm × 重さ <b>${Math.round(m.g)}</b>g`;
     $('#resScore').innerHTML = `${m.score.toLocaleString()}<small>点</small>`;
     $('#resNote').textContent = m.h < .1 ? '丼のふちより上に盛ると高さが点になる' : 'お客さんはのけぞって喜んだ';
+    const ok2 = m.score > 0;
+    $('#entryBox').hidden = !ok2; $('#send').disabled = false; $('#sendMsg').textContent = '';
+    $('#name').value = lsGet('moya_name') || '';
   } else {
+    $('#entryBox').hidden = true;
     $('#resHead').textContent = why === 'carry' ? '運んでる途中で落ちた' : 'もやしが落ちた';
     $('#resRank').textContent = 'ちゃぶ台返し';
     $('#resLine').innerHTML = '';
     $('#resScore').innerHTML = `0<small>点</small>`;
     $('#resNote').textContent = 'お客さんは怒って帰った';
   }
-  $('#result').hidden = false; $('#again').focus();
+  $('#again').textContent = 'もう一杯'; $('#resRankBtn').hidden = false;
+  $('#result').hidden = false; resultMode = 'mine';
 }
 function flash() { const f = $('#flash'); f.style.transition = 'none'; f.style.opacity = .55; requestAnimationFrame(() => { f.style.transition = ''; f.style.opacity = 0; }); }
 
@@ -933,12 +991,15 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 function logic(dt) {
+  if (phase === 'build' || phase === 'carry' || phase === 'judge') gameT += dt;
+  if (phase === 'carry') { rec.acc += dt; while (rec.acc >= 1 / 15) { rec.acc -= 1 / 15; rec.carry.push(carry.pT); } }
+  if (phase === 'replay') { updateReplay(dt); return; }
   checkFall(dt);
   if (phase === 'judge') {
     carry.tJudge += dt;
     let mv = 0; for (const cl of clumps) mv = Math.max(mv, cl.body.velocity.length());
     carry.settle = mv < 3 ? carry.settle + dt : 0;
-    if (carry.tJudge > 1.0 && (carry.settle > .5 || carry.tJudge > 3.5)) { final = measure(); success(); }
+    if (carry.tJudge > 1.0 && (carry.settle > .5 || carry.tJudge > 3.5)) { final = measure(); snapPieces('s2'); final.rec = encRec(); success(); }
   }
   if (phase === 'build') $('#serve').disabled = !clumps.length || !!held;
   if (hintTimer > 0) { hintTimer -= dt; if (hintTimer <= 0 && phase === 'build') setHint(clumps.length ? '' : '小皿を長押しでつかんで、丼の上ではなす'); }
@@ -970,6 +1031,7 @@ function render(dt) {
     }
   };
   for (const pc of clumps) {
+    if (pc.hide) continue;
     const b = pc.body; _v.set(b.position.x, b.position.y, b.position.z); _q.set(b.quaternion.x, b.quaternion.y, b.quaternion.z, b.quaternion.w);
     put(pc, _m2.compose(_v, _q, _s.set(1, 1, 1)));
   }
@@ -1000,6 +1062,188 @@ function render(dt) {
 $('#loading').remove();
 requestAnimationFrame(frame);
 
+/* ===================== ランキング ===================== */
+const FB = { apiKey: 'AIzaSyCMwGPHPKsDByV07QPq56-PGXTDxcYVNfc', databaseURL: 'https://furoya-no-onna-default-rtdb.asia-southeast1.firebasedatabase.app' };
+const DBP = 'moyashi', VER = 1, TIDX = { long: 0, mid: 1, short: 2 }, TNAME = ['long', 'mid', 'short'];
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (_) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) { } }
+function dayKey() { return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10).replace(/-/g, ''); }
+async function fbAuth() {
+  let a = lsGet('moya_auth'); if (a && a.exp > Date.now() + 60000) return a;
+  if (a && a.refresh) {
+    try {
+      const r = await fetch('https://securetoken.googleapis.com/v1/token?key=' + FB.apiKey, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(a.refresh) });
+      if (r.ok) { const j = await r.json(); a = { uid: j.user_id, token: j.id_token, refresh: j.refresh_token, exp: Date.now() + (+j.expires_in) * 1000 }; lsSet('moya_auth', a); return a; }
+    } catch (_) { }
+  }
+  const r = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + FB.apiKey, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnSecureToken: true }) });
+  if (!r.ok) throw new Error('auth');
+  const j = await r.json(); a = { uid: j.localId, token: j.idToken, refresh: j.refreshToken, exp: Date.now() + (+j.expiresIn) * 1000 }; lsSet('moya_auth', a); return a;
+}
+async function fbGet(path, q) { const r = await fetch(FB.databaseURL + '/' + path + '.json' + (q || '')); if (!r.ok) throw new Error('get ' + r.status); return r.json(); }
+async function fbPut(path, val, a) { const r = await fetch(FB.databaseURL + '/' + path + '.json?auth=' + encodeURIComponent(a.token), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }); if (!r.ok) throw new Error('put ' + r.status); return r.json(); }
+
+function encRec() {
+  const q = v => Math.round(v * 10), w = v => Math.round(v * 1000);
+  const P = clumps.map(pc => [TIDX[pc.type], pc.grab, Math.round(pc.tm * 100), ...pc.s1.slice(0, 3).map(q), ...pc.s1.slice(3).map(w), ...pc.s2.slice(0, 3).map(q), ...pc.s2.slice(3).map(w)].join(','));
+  return [VER, P.join(';'), rec.carry.map(v => Math.round(v * 1000)).join(',')].join('|');
+}
+function decRec(str) {
+  const [v, ps, cs] = str.split('|');
+  const pieces = (ps ? ps.split(';') : []).map(t => {
+    const a = t.split(',').map(Number);
+    const q = i => a[i] / 10, w = i => a[i] / 1000;
+    return { type: TNAME[a[0]] || 'mid', grab: a[1], tm: a[2] / 100, s1: [q(3), q(4), q(5), w(6), w(7), w(8), w(9)], s2: [q(10), q(11), q(12), w(13), w(14), w(15), w(16)] };
+  });
+  return { v: +v, pieces, carry: (cs ? cs.split(',') : []).map(x => +x / 1000) };
+}
+
+let rankKind = 'day', rankFrom = 'title', resultMode = 'mine';
+const rankCache = {};
+async function loadRank(kind, force) {
+  const c = rankCache[kind];
+  if (c && !force && Date.now() - c.at < 30000) return c.list;
+  const path = kind === 'day' ? DBP + '/day/' + dayKey() : DBP + '/scores';
+  const [sc, hd] = await Promise.all([fbGet(path, '?orderBy=%22s%22&limitToLast=60'), fbGet(DBP + '/hidden').catch(() => null)]);
+  const list = Object.entries(sc || {}).filter(([u]) => !(hd && hd[u])).map(([u, v]) => Object.assign({ u }, v)).sort((a, b) => b.s - a.s || a.t - b.t).slice(0, 50);
+  rankCache[kind] = { list, at: Date.now() }; return list;
+}
+function esc(t) { return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+async function showRank(kind, from) {
+  if (from) rankFrom = from;
+  rankKind = kind;
+  $('#tabDay').setAttribute('aria-pressed', kind === 'day'); $('#tabAll').setAttribute('aria-pressed', kind === 'all');
+  $('#title').hidden = true; $('#result').hidden = true; $('#rank').hidden = false;
+  const ol = $('#rlist'); ol.innerHTML = '<li class="rempty">読みこみ中…</li>';
+  let list;
+  try { list = await loadRank(kind); } catch (e) { ol.innerHTML = '<li class="rempty">ランキングを読みこめませんでした。通信を確かめて、もう一度開いてください</li>'; return; }
+  if (rankKind !== kind) return;
+  if (!list.length) { ol.innerHTML = '<li class="rempty">' + (kind === 'day' ? 'まだ今日の記録はありません。一番乗りのチャンス' : 'まだ記録はありません') + '</li>'; return; }
+  const me = (lsGet('moya_auth') || {}).uid;
+  ol.innerHTML = list.map((e, i) => `<li class="${e.u === me ? 'me' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(e.n)}<small>${(e.h / 10).toFixed(1)}cm × ${e.g}g</small></span><span class="sc">${e.s.toLocaleString()}</span><button class="pl" data-i="${i}" aria-label="${esc(e.n)}さんの盛り方を見る">▶</button></li>`).join('');
+  ol.querySelectorAll('.pl').forEach(b => b.onclick = () => playReplay(list[+b.dataset.i], kind));
+}
+$('#tabDay').onclick = () => showRank('day');
+$('#tabAll').onclick = () => showRank('all');
+$('#titleRank').onclick = () => { audioOn(); showRank('day', 'title'); };
+$('#resRankBtn').onclick = () => { if (resultMode === 'replay') { clearScene(); resetCust(); phase = 'title'; camGoal = 'title'; } showRank(rankKind, 'result'); };
+$('#rankClose').onclick = () => {
+  $('#rank').hidden = true;
+  if (rankFrom === 'result' && resultMode === 'mine') $('#result').hidden = false; else { $('#title').hidden = false; phase = 'title'; camGoal = 'title'; }
+};
+$('#send').onclick = async () => {
+  const name = $('#name').value.trim().replace(/\s+/g, ' ');
+  if (!name) { $('#sendMsg').textContent = '名前を入れてください'; $('#name').focus(); return; }
+  if (!final || !final.score) return;
+  $('#send').disabled = true; $('#sendMsg').textContent = '登録中…';
+  lsSet('moya_name', name);
+  try {
+    const a = await fbAuth(), d = dayKey(), m = final;
+    const row = { n: name.slice(0, 12), s: m.score, h: Math.round(m.h * 10), g: Math.round(m.g), t: { '.sv': 'timestamp' }, v: VER };
+    let msg = [];
+    const best = lsGet('moya_best') || 0, db = lsGet('moya_dbest') || {};
+    if (!(db.d === d && db.s >= m.score)) {
+      await fbPut(DBP + '/dreplays/' + d + '/' + a.uid, { r: m.rec, v: VER }, a);
+      await fbPut(DBP + '/day/' + d + '/' + a.uid, row, a);
+      lsSet('moya_dbest', { d, s: m.score }); msg.push('今日');
+    }
+    if (m.score > best) {
+      await fbPut(DBP + '/replays/' + a.uid, { r: m.rec, v: VER }, a);
+      await fbPut(DBP + '/scores/' + a.uid, row, a);
+      lsSet('moya_best', m.score); msg.push('全期間');
+    }
+    delete rankCache.day; delete rankCache.all;
+    $('#sendMsg').textContent = msg.length ? msg.join('と') + 'のランキングに登録しました' : '自分の記録のほうが上なので、登録はそのままです';
+  } catch (e) {
+    $('#send').disabled = false;
+    $('#sendMsg').textContent = '登録できませんでした。前の登録から20秒たっていないか、通信を確かめてもう一度押してください';
+  }
+};
+
+/* ===================== 再生 ===================== */
+let rp = null;
+async function playReplay(entry, kind) {
+  const ol = $('#rlist');
+  let d;
+  try {
+    const r = await fbGet(kind === 'day' ? DBP + '/dreplays/' + dayKey() + '/' + entry.u : DBP + '/replays/' + entry.u);
+    if (!r || !r.r) throw new Error('none');
+    d = decRec(r.r);
+  } catch (e) { ol.insertAdjacentHTML('afterbegin', '<li class="rempty">この盛り方は再生できませんでした</li>'); return; }
+  startReplay(d, entry);
+}
+function startReplay(d, entry) {
+  clearScene(); resetCust();
+  phase = 'replay'; camGoal = 'build';
+  $('#rank').hidden = true; $('#result').hidden = true; $('#title').hidden = true;
+  $('#hud').hidden = false; $('#bar').hidden = true; $('#rpBar').hidden = false;
+  setHint(entry.n + ' さんの盛り方');
+  const grabs = [...new Set(d.pieces.map(p => p.grab))].sort((a, b) => a - b);
+  const gt = {}; grabs.forEach(g => { gt[g] = Math.min(...d.pieces.filter(p => p.grab === g).map(p => p.tm)); });
+  const Tg = {}; let t = .5;
+  grabs.forEach((g, i) => { Tg[g] = t; const nx = grabs[i + 1]; t += nx === undefined ? 0 : clamp((gt[nx] - gt[g]) * .5, .16, .45); });
+  for (const p of d.pieces) {
+    const pc = makePiece(p.type);
+    pc.body = { position: new CANNON.Vec3(), quaternion: new CANNON.Quaternion(), velocity: new CANNON.Vec3() };
+    pc.hide = true; pc.rp = p; pc.T0 = Tg[p.grab]; clumps.push(pc);
+  }
+  rp = { t: 0, buildEnd: t + .8, carry: d.carry.length ? d.carry : [0, 1], entry, done: false };
+  rp.carryDur = rp.carry.length / 15;
+}
+const _rq1 = new THREE.Quaternion(), _rq2 = new THREE.Quaternion();
+function setPiece(pc, base, a, b, e) {
+  const B = pc.body;
+  B.position.set(base.x + a[0] + (b ? (b[0] - a[0]) * e : 0), base.y + a[1] + (b ? (b[1] - a[1]) * e : 0), base.z + a[2] + (b ? (b[2] - a[2]) * e : 0));
+  _rq1.set(a[3], a[4], a[5], a[6]).normalize();
+  if (b) _rq1.slerp(_rq2.set(b[3], b[4], b[5], b[6]).normalize(), e);
+  B.quaternion.set(_rq1.x, _rq1.y, _rq1.z, _rq1.w);
+}
+function updateReplay(dt) {
+  if (!rp) return;
+  rp.t += dt; const t = rp.t;
+  const base = new THREE.Vector3();
+  if (t < rp.buildEnd) {
+    for (const pc of clumps) {
+      if (t < pc.T0) continue;
+      if (pc.hide) { pc.hide = false; if (t - pc.T0 < .1) sfxDrop(); }
+      const e = clamp((t - pc.T0) / .25, 0, 1);
+      setPiece(pc, base.set(0, (1 - e) * (1 - e) * 7, 0), pc.rp.s1);
+    }
+  } else if (t < rp.buildEnd + rp.carryDur) {
+    camGoal = 'carry';
+    const k = (t - rp.buildEnd) * 15, i = Math.floor(k), f = k - i;
+    const a = rp.carry[Math.min(i, rp.carry.length - 1)], b = rp.carry[Math.min(i + 1, rp.carry.length - 1)];
+    base.copy(path.getPointAt(clamp(a + (b - a) * f, 0, 1)));
+    for (const pc of clumps) { pc.hide = false; setPiece(pc, base, pc.rp.s1); }
+  } else {
+    base.copy(path.getPointAt(1));
+    const e = clamp((t - rp.buildEnd - rp.carryDur) / .6, 0, 1);
+    for (const pc of clumps) { pc.hide = false; setPiece(pc, base, pc.rp.s1, pc.rp.s2, e); }
+    if (e >= 1 && !rp.done) {
+      rp.done = true; cust.state = 'happy'; cust.t = 0; sfxThump(.6);
+      const en = rp.entry;
+      setTimeout(() => { if (phase === 'replay' && rp && rp.entry === en) showReplayEnd(en); }, 1500);
+    }
+  }
+  bowlBody.position.set(base.x, base.y, base.z);
+  const m = measure();
+  $('#sh').innerHTML = `${m.h.toFixed(1)}<small>cm</small>`;
+  $('#sw').innerHTML = `${Math.round(m.g)}<small>g</small>`;
+  $('#ss').textContent = m.score.toLocaleString();
+}
+function showReplayEnd(en) {
+  $('#hud').hidden = true; $('#rpBar').hidden = true; setHint('');
+  $('#resCard').classList.remove('fail');
+  $('#resHead').textContent = en.n + ' さんの一杯';
+  $('#resRank').textContent = rankName(en.g);
+  $('#resLine').innerHTML = `高さ <b>${(en.h / 10).toFixed(1)}</b>cm × 重さ <b>${en.g}</b>g`;
+  $('#resScore').innerHTML = `${en.s.toLocaleString()}<small>点</small>`;
+  $('#resNote').textContent = '';
+  $('#entryBox').hidden = true; $('#again').textContent = '自分も盛る'; $('#resRankBtn').hidden = false;
+  $('#result').hidden = false; resultMode = 'replay'; rankFrom = 'replay';
+}
+$('#rpBack').onclick = () => { clearScene(); resetCust(); phase = 'title'; camGoal = 'title'; $('#hud').hidden = true; setHint(''); showRank(rankKind); };
+
 /* 確認用 */
 window.__moya = {
   get phase() { return phase; }, measure, clumps, world, bowlBody, carry, startGame,
@@ -1008,6 +1252,8 @@ window.__moya = {
   serve() { $('#serve').disabled = false; $('#serve').onclick(); },
   view(v) { camGoal = v; },
   pause(b) { paused = b; },
+  get final() { return final; },
+  replayLocal() { startReplay(decRec(final.rec), { n: 'テスト', s: final.score, h: Math.round(final.h * 10), g: Math.round(final.g) }); },
   topAt(x, z) { cacheSpheres(); return topAt(x, z, 2); },
   scr(x, y, z) { const v = new THREE.Vector3(x, y, z).project(camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; },
   snap(n = 40) { for (let i = 0; i < n; i++) { cacheSpheres(); render(1 / 30); } },
