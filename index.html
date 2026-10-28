@@ -942,7 +942,9 @@ function showResult(ok, why) {
 }
 function flash(v = .55) { const f = $('#flash'); f.style.transition = 'none'; f.style.opacity = v; requestAnimationFrame(() => { f.style.transition = ''; f.style.opacity = 0; }); }
 
+let noFail = false;
 function checkFall(dt) {
+  if (noFail) return;
   if (phase !== 'build' && phase !== 'carry' && phase !== 'judge') return;
   const bp = bowlBody.position;
   for (const cl of clumps) {
@@ -1364,6 +1366,15 @@ window.__moya = {
   serve() { $('#serve').disabled = false; $('#serve').onclick(); },
   view(v) { camGoal = v; },
   pause(b) { paused = b; },
+  frame(dt, mult = 1) { const n = Math.max(1, Math.round(dt * mult * 90)); for (let i = 0; i < n; i++) world.step(1 / 90); cacheSpheres(); logic(dt * mult); render(dt); },
+  pvHold(type, n, x, z) { held = newHeld(type, 'tong'); growHeld(held, n); held.grow = false; held.fine = true; held.aim = new THREE.Vector3(x, 0, z); held.lx = 0; held.ly = 0; ptr = { id: -1, x: 0, y: 0, lift: 0 }; },
+  pvAim(x, z) { if (held) held.aim.set(x, 0, z); },
+  pvRelease() { if (held && held.over) dropHeld(held); held = null; ptr = null; placeTool(null, 0, false); },
+  setNoFail(v) { noFail = v; },
+  lowq(px) { key.shadow.mapSize.set(1024, 1024); if (key.shadow.map) { key.shadow.map.dispose(); key.shadow.map = null; } renderer.shadowMap.type = THREE.PCFShadowMap; renderer.setPixelRatio(px || 1); resize(); },
+  timeRender(n) { const t = performance.now(); for (let i = 0; i < n; i++) render(1 / 24); renderer.getContext().finish(); return (performance.now() - t) / n; },
+  setPT(v) { carry.pT = v; },
+  rankName(s) { return rankName(s); },
   get final() { return final; },
   replayLocal() { startReplay(decRec(final.rec), { n: 'テスト', s: final.score, h: Math.round(final.h * 10), g: Math.round(final.g) }); },
   topAt(x, z) { cacheSpheres(); return topAt(x, z, 2); },
