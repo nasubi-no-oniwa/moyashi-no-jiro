@@ -28,8 +28,8 @@ html,body{height:100%;margin:0;background:var(--ink);color:var(--paper);overflow
 #app{position:fixed;inset:0}
 #c{width:100%;height:100%;display:block;touch-action:none}
 #hud{position:absolute;top:0;left:0;right:0;padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:8px;justify-content:center;pointer-events:none}
-.stat{background:rgba(27,18,12,.74);border:1px solid rgba(246,236,210,.16);border-radius:10px;padding:5px 10px 6px;min-width:78px;text-align:center}
-.stat span{display:block;font-size:11px;letter-spacing:.1em;opacity:.75;font-weight:700}
+.stat{background:rgba(27,18,12,.74);border:1px solid rgba(246,236,210,.16);border-radius:10px;padding:5px 8px 6px;min-width:70px;text-align:center}
+.stat span{display:block;font-size:11px;letter-spacing:.06em;opacity:.75;font-weight:700;white-space:nowrap}
 .stat b{display:block;font-family:var(--disp);font-weight:400;font-size:21px;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--sign)}
 .stat b small{font-family:var(--body);font-size:12px;font-weight:700;margin-left:2px;color:var(--paper)}
 #bar{position:absolute;left:0;right:0;bottom:0;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:flex-end;justify-content:space-between;gap:10px;pointer-events:none}
@@ -82,6 +82,11 @@ button:focus-visible{outline:3px solid var(--sign);outline-offset:2px}
 .rlist .pl{width:32px;height:32px;border-radius:50%;border:0;background:var(--chili);color:#fff;font-size:12px;cursor:pointer}
 .rlist .me .nm{color:var(--chili)}
 .rempty{padding:18px 0;font-weight:700;text-align:center}
+.langs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px}
+.langs button{font:700 13px var(--body);background:transparent;color:var(--ink);border:1.5px solid rgba(27,18,12,.5);border-radius:999px;padding:4px 11px;cursor:pointer}
+.langs button[aria-pressed="true"]{background:var(--ink);color:var(--sign);border-color:var(--ink)}
+html[lang="ko"] .sign h1,html[lang="zh"] .sign h1{font-family:var(--disp),"Noto Sans KR","Noto Sans TC",sans-serif}
+html[lang="en"] .sign h1{font-size:clamp(34px,10.5vw,46px)}
 #rpBar{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px)}
 #rpBar button{font:900 16px var(--body);background:rgba(27,18,12,.85);color:var(--paper);border:1px solid rgba(246,236,210,.3);border-radius:999px;padding:10px 22px;cursor:pointer}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .4s}
@@ -95,36 +100,37 @@ button:focus-visible{outline:3px solid var(--sign);outline-offset:2px}
   <canvas id="c"></canvas>
   <div id="labels"></div>
   <div id="hud" hidden>
-    <div class="stat"><span>高さ（ふちから）</span><b id="sh">0.0<small>cm</small></b></div>
-    <div class="stat"><span>重さ</span><b id="sw">0<small>g</small></b></div>
-    <div class="stat"><span>点数</span><b id="ss">0</b></div>
+    <div class="stat"><span data-i="statH">高さ（ふちから）</span><b id="sh">0.0<small>cm</small></b></div>
+    <div class="stat"><span data-i="statW">重さ</span><b id="sw">0<small>g</small></b></div>
+    <div class="stat"><span data-i="statS">点数</span><b id="ss">0</b></div>
   </div>
   <div id="hint" hidden></div>
   <div id="gauge" hidden></div>
   <div id="gtext" hidden></div>
   <div id="bar" hidden>
     <div class="tools" role="group" aria-label="道具">
-      <button id="tTong" aria-pressed="true">トング</button>
-      <button id="tHand" aria-pressed="false">素手</button>
+      <button id="tTong" aria-pressed="true" data-i="tong">トング</button>
+      <button id="tHand" aria-pressed="false" data-i="hand">素手</button>
     </div>
-    <button id="viewBtn" class="viewbtn" aria-label="視点を切りかえる">視点<b id="viewName">正面</b></button>
-    <button id="serve" disabled>出す</button>
+    <button id="viewBtn" class="viewbtn" aria-label="視点を切りかえる"><span data-i="view">視点</span><b id="viewName">正面</b></button>
+    <button id="serve" disabled data-i="serve">出す</button>
   </div>
   <div id="flash"></div>
 
   <div class="overlay" id="title">
     <div class="sign">
-      <div class="stamp">ヤサイ<br>マシ</div>
-      <h1>もやしの<br>次郎</h1>
-      <p class="sub">ヤサイ、どこまで盛れる？</p>
+      <div class="stamp" data-ih="stamp">ヤサイ<br>マシ</div>
+      <h1 data-ih="titleBr">もやしの<br>次郎</h1>
+      <p class="sub" data-i="sub">ヤサイ、どこまで盛れる？</p>
       <ul class="how">
-        <li><b>1</b><span>小皿を長押しでつかむ。長く押すほどたくさん</span></li>
-        <li><b>2</b><span>丼の上で指をはなして盛る</span></li>
-        <li><b>3</b><span>「出す」でカウンター越しにお客さんの前へ</span></li>
-        <li><b>4</b><span>落としたらちゃぶ台返し。点数は 高さ×重さ</span></li>
+        <li><b>1</b><span data-i="how1">小皿を長押しでつかむ。長く押すほどたくさん</span></li>
+        <li><b>2</b><span data-i="how2">丼の上で指をはなして盛る</span></li>
+        <li><b>3</b><span data-i="how3">「出す」でカウンター越しにお客さんの前へ</span></li>
+        <li><b>4</b><span data-i="how4">落としたらちゃぶ台返し。点数は 高さ×重さ</span></li>
       </ul>
-      <button class="big" id="start">店に立つ</button>
-      <button class="big alt" id="titleRank">ランキング</button>
+      <button class="big" id="start" data-i="start">店に立つ</button>
+      <button class="big alt" id="titleRank" data-i="rankBtn">ランキング</button>
+      <div class="langs" role="group" aria-label="Language"><button data-lang="ja">日本語</button><button data-lang="en">English</button><button data-lang="zh">繁中</button><button data-lang="ko">한국어</button></div>
     </div>
   </div>
 
@@ -136,22 +142,22 @@ button:focus-visible{outline:3px solid var(--sign);outline-offset:2px}
       <div class="res-score" id="resScore"></div>
       <p class="res-note" id="resNote"></p>
       <div id="entryBox" hidden>
-        <div class="entry"><input id="name" maxlength="12" placeholder="名前（12文字まで）" autocomplete="nickname"><button id="send">登録</button></div>
+        <div class="entry"><input id="name" maxlength="12" placeholder="名前（12文字まで）" data-ip="namePh" autocomplete="nickname"><button id="send" data-i="send">登録</button></div>
         <p class="send-msg" id="sendMsg"></p>
       </div>
       <button class="big" id="again">もう一杯</button>
-      <button class="big alt" id="resRankBtn">ランキングを見る</button>
+      <button class="big alt" id="resRankBtn" data-i="seeRank">ランキングを見る</button>
     </div>
   </div>
   <div class="overlay" id="rank" hidden>
     <div class="sign">
-      <p class="res-rank" style="margin:0">盛り番付</p>
-      <div class="tabs" role="group" aria-label="期間"><button id="tabDay" aria-pressed="true">今日</button><button id="tabAll" aria-pressed="false">全期間</button></div>
+      <p class="res-rank" style="margin:0" data-i="rankTitle">盛り番付</p>
+      <div class="tabs" role="group" aria-label="期間"><button id="tabDay" aria-pressed="true" data-i="today">今日</button><button id="tabAll" aria-pressed="false" data-i="allTime">全期間</button></div>
       <ol class="rlist" id="rlist"></ol>
-      <button class="big alt" id="rankClose">とじる</button>
+      <button class="big alt" id="rankClose" data-i="close">とじる</button>
     </div>
   </div>
-  <div id="rpBar" hidden><button id="rpBack">もどる</button></div>
+  <div id="rpBar" hidden><button id="rpBack" data-i="back">もどる</button></div>
   <div id="loading">仕込み中…</div>
 </div>
 
@@ -160,6 +166,114 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
 
 const $ = s => document.querySelector(s);
+/* ===================== ことば（日本語・英語・繁体字・韓国語） ===================== */
+const TX = {
+  ja: {
+    statH: '高さ（ふちから）', statW: '重さ', statS: '点数', tong: 'トング', hand: '素手', view: '視点', serve: '出す',
+    vBuild: '正面', vSide: '横', vTop: '真上',
+    stamp: 'ヤサイ<br>マシ', titleBr: 'もやしの<br>次郎', title: 'もやしの次郎', sub: 'ヤサイ、どこまで盛れる？',
+    how1: '小皿を長押しでつかむ。長く押すほどたくさん', how2: '丼の上で指をはなして盛る', how3: '「出す」でカウンター越しにお客さんの前へ', how4: '落としたらちゃぶ台返し。点数は 高さ×重さ',
+    start: '店に立つ', rankBtn: 'ランキング', namePh: '名前（12文字まで）', send: '登録', again: 'もう一杯', againRp: '自分も盛る', seeRank: 'ランキングを見る',
+    rankTitle: '盛り番付', today: '今日', allTime: '全期間', close: 'とじる', back: 'もどる', loading: '仕込み中…',
+    long: '長い', mid: 'ふつう', short: '短い',
+    hintStart: '小皿を長押しでつかんで、丼の上ではなす', hintTap: '小皿を長押ししてつかもう', hintReturned: '小皿にもどした', hintCarry: '指を上にすべらせて、カウンター越しに運ぶ',
+    grab: '{t} {n}本・{g}g', fine: '（微調整中）', toDish: '小皿にもどす',
+    okHead: 'へい、おまち', line: '高さ <b>{h}</b>cm × 重さ <b>{g}</b>g', pts: '点',
+    noteLow: '丼のふちより上に盛ると高さが点になる', noteNext: '{k}／{N}段目。次の「{next}」まであと{p}点', noteTop: '最上段。これ以上の名前はない',
+    failCarry: '運んでる途中でこぼした', failBuild: 'もやしをこぼした', failRank: 'ちゃぶ台返し（大爆発）', failNote: 'ちゃぶ台返しの勢いで、店が爆発した',
+    rLoading: '読みこみ中…', rFail: 'ランキングを読みこめませんでした。通信を確かめて、もう一度開いてください', rEmptyDay: 'まだ今日の記録はありません。一番乗りのチャンス', rEmptyAll: 'まだ記録はありません',
+    needName: '名前を入れてください', sending: '登録中…', sentDay: '今日', sentAll: '全期間', sentJoin: 'と', sent: '{w}のランキングに登録しました', notHigher: '自分の記録のほうが上なので、登録はそのままです', sendFail: '登録できませんでした。前の登録から20秒たっていないか、通信を確かめてもう一度押してください',
+    rpFail: 'この盛り方は再生できませんでした', rpHint: '{n} さんの盛り方', rpHead: '{n} さんの一杯', play: '{n}さんの盛り方を見る',
+  },
+  en: {
+    statH: 'Height (over rim)', statW: 'Weight', statS: 'Score', tong: 'Tongs', hand: 'Hand', view: 'View', serve: 'Serve',
+    vBuild: 'Front', vSide: 'Side', vTop: 'Top',
+    stamp: 'EXTRA<br>VEG', titleBr: 'Moyashi<br>no Jiro', title: 'Moyashi no Jiro', sub: 'How high can you pile the bean sprouts?',
+    how1: 'Press and hold a dish to grab sprouts. Hold longer to grab more', how2: 'Let go over the bowl to pile them on', how3: 'Tap "Serve" and carry it over the counter', how4: 'Spill it and the customer flips the table. Score = height × weight',
+    start: 'Open the shop', rankBtn: 'Rankings', namePh: 'Name (up to 12)', send: 'Submit', again: 'One more bowl', againRp: 'My turn', seeRank: 'See rankings',
+    rankTitle: 'Pile Rankings', today: 'Today', allTime: 'All time', close: 'Close', back: 'Back', loading: 'Prepping…',
+    long: 'Long', mid: 'Regular', short: 'Short',
+    hintStart: 'Hold a dish to grab sprouts, let go over the bowl', hintTap: 'Press and hold a dish to grab sprouts', hintReturned: 'Put back on the dish', hintCarry: 'Swipe up to carry it over the counter',
+    grab: '{t} ×{n} · {g}g', fine: ' (fine aim)', toDish: 'Put back',
+    okHead: 'Here you go!', line: 'Height <b>{h}</b>cm × Weight <b>{g}</b>g', pts: 'pts',
+    noteLow: 'Only the part above the rim counts as height', noteNext: 'Tier {k} of {N}. {p} pts to "{next}"', noteTop: 'Top tier. There is no greater name',
+    failCarry: 'Spilled on the way', failBuild: 'Sprouts spilled', failRank: 'Table flip (KABOOM)', failNote: 'The table flip blew up the whole shop',
+    rLoading: 'Loading…', rFail: "Couldn't load the rankings. Check your connection and open it again", rEmptyDay: 'No records today yet. Be the first!', rEmptyAll: 'No records yet',
+    needName: 'Enter a name', sending: 'Submitting…', sentDay: "today's", sentAll: 'all-time', sentJoin: ' and ', sent: 'Added to the {w} rankings', notHigher: 'Your earlier record is higher, so it stays', sendFail: "Couldn't submit. Wait 20 seconds after your last submit, check your connection and try again",
+    rpFail: "This pile can't be replayed", rpHint: "{n}'s pile", rpHead: "{n}'s bowl", play: "Watch {n}'s pile",
+  },
+  zh: {
+    statH: '高度（碗緣以上）', statW: '重量', statS: '分數', tong: '夾子', hand: '徒手', view: '視角', serve: '上菜',
+    vBuild: '正面', vSide: '側面', vTop: '正上方',
+    stamp: '蔬菜<br>加量', titleBr: '豆芽<br>次郎', title: '豆芽次郎', sub: '豆芽，到底能堆多高？',
+    how1: '長按小碟夾起豆芽，按越久夾越多', how2: '在碗上方放開手指就能堆上去', how3: '按「上菜」，隔著吧台端到客人面前', how4: '灑出來客人就會翻桌。分數＝高度×重量',
+    start: '開店', rankBtn: '排行榜', namePh: '名字（最多12字）', send: '登錄', again: '再來一碗', againRp: '換我堆', seeRank: '看排行榜',
+    rankTitle: '堆疊排行榜', today: '今天', allTime: '全期間', close: '關閉', back: '返回', loading: '備料中…',
+    long: '長', mid: '普通', short: '短',
+    hintStart: '長按小碟夾起豆芽，在碗上方放開', hintTap: '長按小碟來夾豆芽', hintReturned: '放回小碟了', hintCarry: '手指往上滑，隔著吧台端過去',
+    grab: '{t} {n}根・{g}g', fine: '（微調中）', toDish: '放回小碟',
+    okHead: '來，久等了', line: '高度 <b>{h}</b>cm × 重量 <b>{g}</b>g', pts: '分',
+    noteLow: '堆到碗緣以上，高度才會計分', noteNext: '第{k}／{N}階。離「{next}」還差{p}分', noteTop: '最高階。沒有比這更厲害的名字了',
+    failCarry: '端到一半灑出來了', failBuild: '豆芽灑出來了', failRank: '翻桌（大爆炸）', failNote: '翻桌的力道讓整間店爆炸了',
+    rLoading: '讀取中…', rFail: '無法讀取排行榜。請確認網路後再打開一次', rEmptyDay: '今天還沒有紀錄。搶第一的機會！', rEmptyAll: '還沒有紀錄',
+    needName: '請輸入名字', sending: '登錄中…', sentDay: '今天', sentAll: '全期間', sentJoin: '和', sent: '已登錄到{w}的排行榜', notHigher: '你之前的紀錄比較高，所以維持原樣', sendFail: '無法登錄。請確認距離上次登錄已過20秒，並檢查網路後再按一次',
+    rpFail: '這個堆法無法重播', rpHint: '{n} 的堆法', rpHead: '{n} 的一碗', play: '看{n}的堆法',
+  },
+  ko: {
+    statH: '높이(그릇 위)', statW: '무게', statS: '점수', tong: '집게', hand: '맨손', view: '시점', serve: '내기',
+    vBuild: '정면', vSide: '옆', vTop: '위',
+    stamp: '야채<br>추가', titleBr: '숙주의<br>지로', title: '숙주의 지로', sub: '숙주, 얼마나 높이 쌓을 수 있을까?',
+    how1: '접시를 길게 눌러 집기. 오래 누를수록 많이', how2: '그릇 위에서 손가락을 떼면 쌓인다', how3: '「내기」를 눌러 카운터 너머 손님 앞으로', how4: '흘리면 손님이 상을 엎는다. 점수는 높이×무게',
+    start: '가게 열기', rankBtn: '랭킹', namePh: '이름(12자까지)', send: '등록', again: '한 그릇 더', againRp: '나도 쌓기', seeRank: '랭킹 보기',
+    rankTitle: '쌓기 랭킹', today: '오늘', allTime: '전체', close: '닫기', back: '돌아가기', loading: '준비 중…',
+    long: '긴', mid: '보통', short: '짧은',
+    hintStart: '접시를 길게 눌러 집고, 그릇 위에서 떼기', hintTap: '접시를 길게 눌러 숙주를 집자', hintReturned: '접시에 되돌렸다', hintCarry: '손가락을 위로 밀어 카운터 너머로 옮기기',
+    grab: '{t} {n}가닥・{g}g', fine: '(미세 조정 중)', toDish: '접시에 되돌리기',
+    okHead: '자, 나왔습니다', line: '높이 <b>{h}</b>cm × 무게 <b>{g}</b>g', pts: '점',
+    noteLow: '그릇 가장자리보다 위로 쌓아야 높이가 점수가 된다', noteNext: '{N}단 중 {k}단. 다음 「{next}」까지 {p}점', noteTop: '최상단. 이보다 높은 이름은 없다',
+    failCarry: '옮기다가 흘렸다', failBuild: '숙주를 흘렸다', failRank: '상 엎기(대폭발)', failNote: '상을 엎은 기세로 가게가 폭발했다',
+    rLoading: '불러오는 중…', rFail: '랭킹을 불러오지 못했습니다. 통신을 확인하고 다시 열어 주세요', rEmptyDay: '아직 오늘 기록이 없습니다. 1등의 기회!', rEmptyAll: '아직 기록이 없습니다',
+    needName: '이름을 입력해 주세요', sending: '등록 중…', sentDay: '오늘', sentAll: '전체', sentJoin: '와 ', sent: '{w} 랭킹에 등록했습니다', notHigher: '이전 기록이 더 높아서 그대로 둡니다', sendFail: '등록하지 못했습니다. 마지막 등록 후 20초가 지났는지, 통신을 확인하고 다시 눌러 주세요',
+    rpFail: '이 쌓기는 재생할 수 없습니다', rpHint: '{n} 님의 쌓기', rpHead: '{n} 님의 한 그릇', play: '{n} 님의 쌓기 보기',
+  },
+};
+const RAMEN_NAMES_L = {
+  en: ['Basically No Veg', 'Light Veg', 'Regular Veg', 'A Bit Extra', 'Extra Veg', 'Double Extra', 'Triple Extra', 'Sprout Hill', 'Sprout Mound', 'Silver Hillock',
+    'Apprentice Mt. Fuji', 'Twin Tier', 'Heaven Pile', 'Sprout Volcano', 'The White Tower', 'Crunch Keep', 'Sprout Castle', 'Silver Citadel', 'Cloud Piercer', 'Sprout Himalaya',
+    'Chomolungma Pile', 'Roof of the World', 'Skyward White Peak', 'Stratosphere Sprouts', 'Sprout Range', 'Impregnable White', 'Ascending White Dragon', "Conqueror's Pile", 'Silver Temple', 'Sacred Sprouts',
+    'Sun Goddess Sprouts', 'Mount Meru', 'Sprout Skyscraper', 'Sprouts of Babel', 'Space Elevator Pile', 'Atmosphere Breaker', 'Star Piercer', 'White Supernova', 'Galaxy Crosser', 'Sprout Singularity',
+    'Event Horizon Sprouts', 'Genesis Pile', 'Sprout of Creation', 'Ruler of Chaos', 'Sprout God', 'Supreme Sprout God', 'Sprout of the End', 'Infinite Pile', 'True Moyashi Jiro', 'Legendary Jiro'],
+  zh: ['幾乎沒菜', '蔬菜少量', '蔬菜普通', '蔬菜微加', '蔬菜加量', '蔬菜雙倍加量', '蔬菜三倍加量', '豆芽小丘', '豆芽小山', '白銀小山',
+    '見習豆芽富士', '雙層堆', '天堆', '豆芽火山', '白之塔', '爽脆天守閣', '豆芽城', '白銀要塞', '衝破雲霄的豆芽', '豆芽喜馬拉雅',
+    '聖母峰堆', '世界屋脊堆', '天空白嶺', '平流層豆芽', '豆芽山脈', '難攻不落・白', '白龍昇天堆', '天下布武豆芽', '白銀神殿', '神域豆芽',
+    '天照豆芽', '須彌山堆', '豆芽摩天樓', '巴別豆芽塔', '軌道電梯堆', '突破大氣層堆', '穿星豆芽', '白色超新星', '橫越銀河的豆芽', '豆芽奇異點',
+    '事件視界豆芽', '開天闢地堆', '創世豆芽', '統御混沌之白', '豆芽神', '極・豆芽神', '終焉豆芽', '無限堆', '真・豆芽次郎', '傳說的次郎'],
+  ko: ['야채 없는 셈', '야채 조금', '야채 보통', '야채 살짝 추가', '야채 추가', '야채 곱빼기', '야채 세 배', '숙주 언덕', '숙주 동산', '은빛 동산',
+    '견습 숙주 후지산', '2단 쌓기', '하늘 쌓기', '숙주 화산', '하얀 탑', '아삭아삭 천수각', '숙주 성', '은빛 요새', '구름을 뚫는 숙주', '숙주 히말라야',
+    '초모룽마 쌓기', '세계의 지붕 쌓기', '하늘의 흰 봉우리', '성층권 숙주', '숙주 산맥', '난공불락・백', '백룡승천 쌓기', '천하포무 숙주', '은빛 신전', '신역의 숙주',
+    '아마테라스 숙주', '수미산 쌓기', '숙주 마천루', '바벨의 숙주', '궤도 엘리베이터 쌓기', '대기권 돌파 쌓기', '별을 꿰뚫는 숙주', '하얀 초신성', '은하를 건너는 숙주', '숙주 특이점',
+    '사건의 지평선 숙주', '천지개벽 쌓기', '창세의 숙주', '혼돈을 다스리는 백', '숙주의 신', '극・숙주의 신', '종언의 숙주', '무한 쌓기', '진・숙주의 지로', '전설의 지로'],
+};
+function pickLang() {
+  const saved = (() => { try { return JSON.parse(localStorage.getItem('moya_lang')); } catch (_) { return null; } })();
+  if (saved && TX[saved]) return saved;
+  const n = (navigator.language || 'ja').toLowerCase();
+  if (n.startsWith('ja')) return 'ja'; if (n.startsWith('ko')) return 'ko'; if (n.startsWith('zh')) return 'zh'; return 'en';
+}
+let LANG = pickLang();
+function tr(k, v) { let s = (TX[LANG] && TX[LANG][k]) ?? TX.ja[k] ?? k; if (v) for (const x in v) s = s.split('{' + x + '}').join(v[x]); return s; }
+function applyLang() {
+  document.documentElement.lang = LANG === 'zh' ? 'zh-Hant' : LANG;
+  document.querySelectorAll('[data-i]').forEach(e => { e.textContent = tr(e.dataset.i); });
+  document.querySelectorAll('[data-ih]').forEach(e => { e.innerHTML = tr(e.dataset.ih); });
+  document.querySelectorAll('[data-ip]').forEach(e => { e.placeholder = tr(e.dataset.ip); });
+  document.querySelectorAll('.langs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === LANG));
+  document.title = tr('title');
+  if (typeof DISHES !== 'undefined') for (const d of DISHES) if (d.lab) d.lab.textContent = tr(d.type);
+  const vn = document.getElementById('viewName'); if (vn && typeof buildView !== 'undefined') vn.textContent = tr({ build: 'vBuild', side: 'vSide', top: 'vTop' }[buildView]);
+}
+document.querySelectorAll('.langs button').forEach(b => b.onclick = () => { LANG = b.dataset.lang; try { localStorage.setItem('moya_lang', JSON.stringify(LANG)); } catch (_) { } applyLang(); });
+
 const rnd = Math.random, R = (a, b) => a + (b - a) * rnd();
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -380,7 +494,7 @@ const DISHES = [
     // つかむ判定
     const hit = new THREE.Mesh(new THREE.CylinderGeometry(8.5, 8.5, 8, 16), new THREE.MeshBasicMaterial({ visible: false }));
     hit.position.set(d.x, KITCH_TOP + 3, d.z); hit.userData.type = d.type; scene.add(hit); d.hit = hit;
-    const lab = document.createElement('div'); lab.className = 'dlabel'; lab.textContent = T.name; $('#labels').appendChild(lab); d.lab = lab;
+    const lab = document.createElement('div'); lab.className = 'dlabel'; lab.textContent = tr(d.type); $('#labels').appendChild(lab); d.lab = lab;
   }
   for (const k in TYPES) { deco[k].count = dc[k]; deco[k].instanceMatrix.needsUpdate = true; }
   decoH.count = hc; decoH.instanceMatrix.needsUpdate = true;
@@ -743,7 +857,7 @@ canvas.addEventListener('pointerdown', e => {
     if (held) return;
     setNDC(e, 0);
     const hits = ray.intersectObjects(DISHES.map(d => d.hit));
-    if (!hits.length) { flashHint('小皿を長押ししてつかもう'); return; }
+    if (!hits.length) { flashHint(tr('hintTap')); return; }
     const type = hits[0].object.userData.type, d = DISHES.find(x => x.type === type);
     held = newHeld(type, tool); held.dish = d; held.t0 = performance.now(); held.grow = true;
     growHeld(held, 1);
@@ -771,7 +885,7 @@ function endPtr(e) {
     if (held.over && d < IN_R + .6 && !held.grow) {
       if (held.tool === 'tong') { held.pos.x += R(-.6, .6); held.pos.z += R(-.6, .6); held.pos.y += .4; }
       dropHeld(held); sfxDrop();
-    } else if (!held.grow) flashHint('小皿にもどした');
+    } else if (!held.grow) flashHint(tr('hintReturned'));
     held = null; placeTool(null, 0, false);
   }
   ptr = null;
@@ -804,7 +918,7 @@ function updateHeld() {
       camera.getWorldDirection(_fw); if (Math.abs(_fw.y) > .97) _fw.set(0, 0, 1); _fw.y = 0; _fw.normalize(); _rt.crossVectors(_fw, UP).normalize();
       const cmPx = camera.position.distanceTo(bp) * 2 * Math.tan(camera.fov * Math.PI / 360) / innerHeight * .5;
       held.aim.addScaledVector(_rt, dx * cmPx).addScaledVector(_fw, -dy * cmPx);
-      if (p && Math.hypot(p.x - bp.x, p.z - bp.z) > IN_R + 12) held.fine = false;
+      if (!held.pv && p && Math.hypot(p.x - bp.x, p.z - bp.z) > IN_R + 12) held.fine = false;
     }
     const d = Math.hypot(held.aim.x - bp.x, held.aim.z - bp.z);
     held.over = d < IN_R + .6;
@@ -819,18 +933,18 @@ function updateHeld() {
   g.hidden = !held.grow; g.style.left = sx + 'px'; g.style.top = sy + 'px';
   g.style.setProperty('--p', (held.pieces.length / held.nmax).toFixed(3));
   gt.hidden = false; gt.style.left = sx + 'px'; gt.style.top = (sy - 18) + 'px';
-  gt.textContent = held.overDish ? '小皿にもどす' : held.fine ? `${T.name} ${held.strands}本・${Math.round(held.grams)}g（微調整中）` : `${T.name} ${held.strands}本・${Math.round(held.grams)}g`;
+  { const gs = tr('grab', { t: tr(held.type), n: held.strands, g: Math.round(held.grams) }); gt.textContent = held.overDish ? tr('toDish') : held.fine ? gs + tr('fine') : gs; }
 }
 const _fw = new THREE.Vector3(), _rt = new THREE.Vector3();
 const marker = new THREE.Mesh(new THREE.RingGeometry(.8, 1, 32), new THREE.MeshBasicMaterial({ color: 0xecc94b, transparent: true, opacity: .8, depthTest: false }));
 marker.rotation.x = -Math.PI / 2; marker.renderOrder = 10; marker.visible = false; scene.add(marker);
 
 let buildView = 'build';
-const VIEW_NAMES = { build: '正面', side: '横', top: '真上' };
+const VIEW_KEYS = { build: 'vBuild', side: 'vSide', top: 'vTop' };
 $('#viewBtn').onclick = () => {
   const order = ['build', 'side', 'top'];
   buildView = order[(order.indexOf(buildView) + 1) % 3];
-  $('#viewName').textContent = VIEW_NAMES[buildView];
+  $('#viewName').textContent = tr(VIEW_KEYS[buildView]);
   if (phase === 'build') camGoal = buildView;
 };
 function setTool(t) { tool = t; $('#tTong').setAttribute('aria-pressed', t === 'tong'); $('#tHand').setAttribute('aria-pressed', t === 'hand'); }
@@ -860,7 +974,7 @@ function startGame() {
   resetCust(); phase = 'build';
   $('#title').hidden = true; $('#result').hidden = true; $('#hud').hidden = false; $('#bar').hidden = false;
   $('#serve').disabled = true; $('#serve').hidden = false; $('.tools').hidden = false;
-  setHint('小皿を長押しでつかんで、丼の上ではなす'); hintTimer = 0;
+  setHint(tr('hintStart')); hintTimer = 0;
   camGoal = buildView; $('#viewBtn').hidden = false;
 }
 $('#start').onclick = () => { audioOn(); startGame(); };
@@ -870,7 +984,7 @@ $('#serve').onclick = () => {
   snapPieces('s1');
   phase = 'carry'; world.allowSleep = false; for (const cl of clumps) cl.body.wakeUp();
   $('.tools').hidden = true; $('#serve').hidden = true; $('#viewBtn').hidden = true;
-  setHint('指を上にすべらせて、カウンター越しに運ぶ'); camGoal = 'carry';
+  setHint(tr('hintCarry')); camGoal = 'carry';
 };
 
 function fail(why) {
@@ -914,30 +1028,30 @@ const RAMEN_NAMES = [
 ];
 const RANK_AT = RAMEN_NAMES.map((_, i) => i === 0 ? 0 : Math.round(50 * Math.pow(1.15, i - 1)));
 function rankIndex(score) { let k = 0; for (let i = 0; i < RANK_AT.length; i++) if (score >= RANK_AT[i]) k = i; return k; }
-function rankName(score) { return RAMEN_NAMES[rankIndex(score)]; }
+function rankName(score) { const i = rankIndex(score); return (RAMEN_NAMES_L[LANG] || RAMEN_NAMES)[i] || RAMEN_NAMES[i]; }
 let final = null;
 function showResult(ok, why) {
   $('#hud').hidden = true; $('#bar').hidden = true;
   const card = $('#resCard'); card.classList.toggle('fail', !ok);
   if (ok) {
     const m = final;
-    $('#resHead').textContent = 'へい、おまち';
+    $('#resHead').textContent = tr('okHead');
     $('#resRank').textContent = rankName(m.score);
-    $('#resLine').innerHTML = `高さ <b>${m.h.toFixed(1)}</b>cm × 重さ <b>${Math.round(m.g)}</b>g`;
-    $('#resScore').innerHTML = `${m.score.toLocaleString()}<small>点</small>`;
-    { const k = rankIndex(m.score); $('#resNote').textContent = m.h < .1 ? '丼のふちより上に盛ると高さが点になる' : k + 1 < RAMEN_NAMES.length ? `${k + 1}／${RAMEN_NAMES.length}段目。次の「${RAMEN_NAMES[k + 1]}」まであと${(RANK_AT[k + 1] - m.score).toLocaleString()}点` : '最上段。これ以上の名前はない'; }
+    $('#resLine').innerHTML = tr('line', { h: m.h.toFixed(1), g: Math.round(m.g) });
+    $('#resScore').innerHTML = `${m.score.toLocaleString()}<small>${tr('pts')}</small>`;
+    { const k = rankIndex(m.score), nm = RAMEN_NAMES_L[LANG] || RAMEN_NAMES; $('#resNote').textContent = m.h < .1 ? tr('noteLow') : k + 1 < nm.length ? tr('noteNext', { k: k + 1, N: nm.length, next: nm[k + 1], p: (RANK_AT[k + 1] - m.score).toLocaleString() }) : tr('noteTop'); }
     const ok2 = m.score > 0;
     $('#entryBox').hidden = !ok2; $('#send').disabled = false; $('#sendMsg').textContent = '';
     $('#name').value = lsGet('moya_name') || '';
   } else {
     $('#entryBox').hidden = true;
-    $('#resHead').textContent = why === 'carry' ? '運んでる途中でこぼした' : 'もやしをこぼした';
-    $('#resRank').textContent = 'ちゃぶ台返し（大爆発）';
+    $('#resHead').textContent = why === 'carry' ? tr('failCarry') : tr('failBuild');
+    $('#resRank').textContent = tr('failRank');
     $('#resLine').innerHTML = '';
-    $('#resScore').innerHTML = `0<small>点</small>`;
-    $('#resNote').textContent = 'ちゃぶ台返しの勢いで、店が爆発した';
+    $('#resScore').innerHTML = `0<small>${tr('pts')}</small>`;
+    $('#resNote').textContent = tr('failNote');
   }
-  $('#again').textContent = 'もう一杯'; $('#resRankBtn').hidden = false;
+  $('#again').textContent = tr('again'); $('#resRankBtn').hidden = false;
   $('#result').hidden = false; resultMode = 'mine';
 }
 function flash(v = .55) { const f = $('#flash'); f.style.transition = 'none'; f.style.opacity = v; requestAnimationFrame(() => { f.style.transition = ''; f.style.opacity = 0; }); }
@@ -1114,7 +1228,7 @@ function logic(dt) {
     if (carry.tJudge > 1.0 && (carry.settle > .5 || carry.tJudge > 3.5)) { final = measure(); snapPieces('s2'); final.rec = encRec(); success(); }
   }
   if (phase === 'build') $('#serve').disabled = !clumps.length || !!held;
-  if (hintTimer > 0) { hintTimer -= dt; if (hintTimer <= 0 && phase === 'build') setHint(clumps.length ? '' : '小皿を長押しでつかんで、丼の上ではなす'); }
+  if (hintTimer > 0) { hintTimer -= dt; if (hintTimer <= 0 && phase === 'build') setHint(clumps.length ? '' : tr('hintStart')); }
   if (phase === 'build' || phase === 'carry' || phase === 'judge') {
     const m = measure();
     $('#sh').innerHTML = `${m.h.toFixed(1)}<small>cm</small>`;
@@ -1174,6 +1288,7 @@ function render(dt) {
   renderer.render(scene, camera);
 }
 $('#loading').remove();
+applyLang();
 requestAnimationFrame(frame);
 
 /* ===================== ランキング ===================== */
@@ -1228,13 +1343,13 @@ async function showRank(kind, from) {
   rankKind = kind;
   $('#tabDay').setAttribute('aria-pressed', kind === 'day'); $('#tabAll').setAttribute('aria-pressed', kind === 'all');
   $('#title').hidden = true; $('#result').hidden = true; $('#rank').hidden = false;
-  const ol = $('#rlist'); ol.innerHTML = '<li class="rempty">読みこみ中…</li>';
+  const ol = $('#rlist'); ol.innerHTML = `<li class="rempty">${tr('rLoading')}</li>`;
   let list;
-  try { list = await loadRank(kind); } catch (e) { ol.innerHTML = '<li class="rempty">ランキングを読みこめませんでした。通信を確かめて、もう一度開いてください</li>'; return; }
+  try { list = await loadRank(kind); } catch (e) { ol.innerHTML = `<li class="rempty">${tr('rFail')}</li>`; return; }
   if (rankKind !== kind) return;
-  if (!list.length) { ol.innerHTML = '<li class="rempty">' + (kind === 'day' ? 'まだ今日の記録はありません。一番乗りのチャンス' : 'まだ記録はありません') + '</li>'; return; }
+  if (!list.length) { ol.innerHTML = '<li class="rempty">' + (kind === 'day' ? tr('rEmptyDay') : tr('rEmptyAll')) + '</li>'; return; }
   const me = (lsGet('moya_auth') || {}).uid;
-  ol.innerHTML = list.map((e, i) => `<li class="${e.u === me ? 'me' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(e.n)}<small>${esc(rankName(e.s))}・${(e.h / 10).toFixed(1)}cm × ${e.g}g</small></span><span class="sc">${e.s.toLocaleString()}</span><button class="pl" data-i="${i}" aria-label="${esc(e.n)}さんの盛り方を見る">▶</button></li>`).join('');
+  ol.innerHTML = list.map((e, i) => `<li class="${e.u === me ? 'me' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(e.n)}<small>${esc(rankName(e.s))}・${(e.h / 10).toFixed(1)}cm × ${e.g}g</small></span><span class="sc">${e.s.toLocaleString()}</span><button class="pl" data-i="${i}" aria-label="${esc(tr('play', { n: e.n }))}">▶</button></li>`).join('');
   ol.querySelectorAll('.pl').forEach(b => b.onclick = () => playReplay(list[+b.dataset.i], kind));
 }
 $('#tabDay').onclick = () => showRank('day');
@@ -1247,9 +1362,9 @@ $('#rankClose').onclick = () => {
 };
 $('#send').onclick = async () => {
   const name = $('#name').value.trim().replace(/\s+/g, ' ');
-  if (!name) { $('#sendMsg').textContent = '名前を入れてください'; $('#name').focus(); return; }
+  if (!name) { $('#sendMsg').textContent = tr('needName'); $('#name').focus(); return; }
   if (!final || !final.score) return;
-  $('#send').disabled = true; $('#sendMsg').textContent = '登録中…';
+  $('#send').disabled = true; $('#sendMsg').textContent = tr('sending');
   lsSet('moya_name', name);
   try {
     const a = await fbAuth(), d = dayKey(), m = final;
@@ -1259,18 +1374,18 @@ $('#send').onclick = async () => {
     if (!(db.d === d && db.s >= m.score)) {
       await fbPut(DBP + '/dreplays/' + d + '/' + a.uid, { r: m.rec, v: VER }, a);
       await fbPut(DBP + '/day/' + d + '/' + a.uid, row, a);
-      lsSet('moya_dbest', { d, s: m.score }); msg.push('今日');
+      lsSet('moya_dbest', { d, s: m.score }); msg.push(tr('sentDay'));
     }
     if (m.score > best) {
       await fbPut(DBP + '/replays/' + a.uid, { r: m.rec, v: VER }, a);
       await fbPut(DBP + '/scores/' + a.uid, row, a);
-      lsSet('moya_best', m.score); msg.push('全期間');
+      lsSet('moya_best', m.score); msg.push(tr('sentAll'));
     }
     delete rankCache.day; delete rankCache.all;
-    $('#sendMsg').textContent = msg.length ? msg.join('と') + 'のランキングに登録しました' : '自分の記録のほうが上なので、登録はそのままです';
+    $('#sendMsg').textContent = msg.length ? tr('sent', { w: msg.join(tr('sentJoin')) }) : tr('notHigher');
   } catch (e) {
     $('#send').disabled = false;
-    $('#sendMsg').textContent = '登録できませんでした。前の登録から20秒たっていないか、通信を確かめてもう一度押してください';
+    $('#sendMsg').textContent = tr('sendFail');
   }
 };
 
@@ -1283,7 +1398,7 @@ async function playReplay(entry, kind) {
     const r = await fbGet(kind === 'day' ? DBP + '/dreplays/' + dayKey() + '/' + entry.u : DBP + '/replays/' + entry.u);
     if (!r || !r.r) throw new Error('none');
     d = decRec(r.r);
-  } catch (e) { ol.insertAdjacentHTML('afterbegin', '<li class="rempty">この盛り方は再生できませんでした</li>'); return; }
+  } catch (e) { ol.insertAdjacentHTML('afterbegin', `<li class="rempty">${tr('rpFail')}</li>`); return; }
   startReplay(d, entry);
 }
 function startReplay(d, entry) {
@@ -1291,7 +1406,7 @@ function startReplay(d, entry) {
   phase = 'replay'; camGoal = 'build';
   $('#rank').hidden = true; $('#result').hidden = true; $('#title').hidden = true;
   $('#hud').hidden = false; $('#bar').hidden = true; $('#rpBar').hidden = false;
-  setHint(entry.n + ' さんの盛り方');
+  setHint(tr('rpHint', { n: entry.n }));
   const grabs = [...new Set(d.pieces.map(p => p.grab))].sort((a, b) => a - b);
   const gt = {}; grabs.forEach(g => { gt[g] = Math.min(...d.pieces.filter(p => p.grab === g).map(p => p.tm)); });
   const Tg = {}; let t = .5;
@@ -1348,12 +1463,12 @@ function updateReplay(dt) {
 function showReplayEnd(en) {
   $('#hud').hidden = true; $('#rpBar').hidden = true; setHint('');
   $('#resCard').classList.remove('fail');
-  $('#resHead').textContent = en.n + ' さんの一杯';
+  $('#resHead').textContent = tr('rpHead', { n: en.n });
   $('#resRank').textContent = rankName(en.s);
-  $('#resLine').innerHTML = `高さ <b>${(en.h / 10).toFixed(1)}</b>cm × 重さ <b>${en.g}</b>g`;
-  $('#resScore').innerHTML = `${en.s.toLocaleString()}<small>点</small>`;
+  $('#resLine').innerHTML = tr('line', { h: (en.h / 10).toFixed(1), g: en.g });
+  $('#resScore').innerHTML = `${en.s.toLocaleString()}<small>${tr('pts')}</small>`;
   $('#resNote').textContent = '';
-  $('#entryBox').hidden = true; $('#again').textContent = '自分も盛る'; $('#resRankBtn').hidden = false;
+  $('#entryBox').hidden = true; $('#again').textContent = tr('againRp'); $('#resRankBtn').hidden = false;
   $('#result').hidden = false; resultMode = 'replay'; rankFrom = 'replay';
 }
 $('#rpBack').onclick = () => { clearScene(); resetCust(); phase = 'title'; camGoal = 'title'; $('#hud').hidden = true; setHint(''); showRank(rankKind); };
@@ -1367,7 +1482,7 @@ window.__moya = {
   view(v) { camGoal = v; },
   pause(b) { paused = b; },
   frame(dt, mult = 1) { const n = Math.max(1, Math.round(dt * mult * 90)); for (let i = 0; i < n; i++) world.step(1 / 90); cacheSpheres(); logic(dt * mult); render(dt); },
-  pvHold(type, n, x, z) { held = newHeld(type, 'tong'); growHeld(held, n); held.grow = false; held.fine = true; held.aim = new THREE.Vector3(x, 0, z); held.lx = 0; held.ly = 0; ptr = { id: -1, x: 0, y: 0, lift: 0 }; },
+  pvHold(type, n, x, z) { held = newHeld(type, 'tong'); growHeld(held, n); held.grow = false; held.fine = true; held.pv = true; held.aim = new THREE.Vector3(x, 0, z); held.lx = 0; held.ly = 0; ptr = { id: -1, x: 0, y: 0, lift: 0 }; },
   pvAim(x, z) { if (held) held.aim.set(x, 0, z); },
   pvRelease() { if (held && held.over) dropHeld(held); held = null; ptr = null; placeTool(null, 0, false); },
   setNoFail(v) { noFail = v; },
@@ -1375,6 +1490,7 @@ window.__moya = {
   timeRender(n) { const t = performance.now(); for (let i = 0; i < n; i++) render(1 / 24); renderer.getContext().finish(); return (performance.now() - t) / n; },
   setPT(v) { carry.pT = v; },
   rankName(s) { return rankName(s); },
+  setLang(l) { LANG = l; applyLang(); },
   get final() { return final; },
   replayLocal() { startReplay(decRec(final.rec), { n: 'テスト', s: final.score, h: Math.round(final.h * 10), g: Math.round(final.g) }); },
   topAt(x, z) { cacheSpheres(); return topAt(x, z, 2); },
