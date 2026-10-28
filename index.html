@@ -899,14 +899,22 @@ function success() {
   phase = 'done'; cust.state = 'happy'; cust.t = 0; setHint(''); sfxThump(.6);
   setTimeout(() => showResult(true), 1500);
 }
-function rankName(g) {
-  if (g < 150) return 'ヤサイ少なめ';
-  if (g < 300) return 'ヤサイふつう';
-  if (g < 500) return 'ヤサイマシ';
-  if (g < 750) return 'ヤサイマシマシ';
-  if (g < 1000) return 'ヤサイマシマシマシ';
-  return 'もやし山脈';
-}
+// 点数（高さ×重さ）で決まる一杯の名前。上に行くほどかっこよくなる
+const RAMEN_NAMES = [
+  'ヤサイ抜き同然', 'ヤサイ少なめ', 'ヤサイふつう', 'ヤサイちょいマシ', 'ヤサイマシ',
+  'ヤサイマシマシ', 'ヤサイマシマシマシ', 'もやしの丘', 'もやし小山', '白銀の小山',
+  '見習いもやし富士', '二段盛り', '天盛り', 'もやし火山', '白き塔',
+  'シャキシャキ天守閣', 'もやし城', '白銀の城塞', '雲を突くもやし', 'もやしヒマラヤ',
+  'チョモランマ盛り', '世界の屋根盛り', '天空の白嶺', '成層圏もやし', 'もやし山脈',
+  '難攻不落・白', '白龍昇天盛り', '天下布武もやし', '白銀神殿', '神域もやし',
+  '天照もやし', '須弥山盛り', 'もやし摩天楼', 'バベルのもやし', '軌道エレベーター盛り',
+  '大気圏突破盛り', '星を穿つもやし', '白き超新星', '銀河を渡るもやし', 'もやし特異点',
+  '事象の地平もやし', '天地開闢盛り', '創世のもやし', '混沌を統べる白', 'もやし神',
+  '極・もやし神', '終焉のもやし', '無限盛り', '真・もやしの次郎', '伝説の次郎',
+];
+const RANK_AT = RAMEN_NAMES.map((_, i) => i === 0 ? 0 : Math.round(50 * Math.pow(1.15, i - 1)));
+function rankIndex(score) { let k = 0; for (let i = 0; i < RANK_AT.length; i++) if (score >= RANK_AT[i]) k = i; return k; }
+function rankName(score) { return RAMEN_NAMES[rankIndex(score)]; }
 let final = null;
 function showResult(ok, why) {
   $('#hud').hidden = true; $('#bar').hidden = true;
@@ -914,10 +922,10 @@ function showResult(ok, why) {
   if (ok) {
     const m = final;
     $('#resHead').textContent = 'へい、おまち';
-    $('#resRank').textContent = rankName(m.g);
+    $('#resRank').textContent = rankName(m.score);
     $('#resLine').innerHTML = `高さ <b>${m.h.toFixed(1)}</b>cm × 重さ <b>${Math.round(m.g)}</b>g`;
     $('#resScore').innerHTML = `${m.score.toLocaleString()}<small>点</small>`;
-    $('#resNote').textContent = m.h < .1 ? '丼のふちより上に盛ると高さが点になる' : 'お客さんはのけぞって喜んだ';
+    { const k = rankIndex(m.score); $('#resNote').textContent = m.h < .1 ? '丼のふちより上に盛ると高さが点になる' : k + 1 < RAMEN_NAMES.length ? `${k + 1}／${RAMEN_NAMES.length}段目。次の「${RAMEN_NAMES[k + 1]}」まであと${(RANK_AT[k + 1] - m.score).toLocaleString()}点` : '最上段。これ以上の名前はない'; }
     const ok2 = m.score > 0;
     $('#entryBox').hidden = !ok2; $('#send').disabled = false; $('#sendMsg').textContent = '';
     $('#name').value = lsGet('moya_name') || '';
@@ -1224,7 +1232,7 @@ async function showRank(kind, from) {
   if (rankKind !== kind) return;
   if (!list.length) { ol.innerHTML = '<li class="rempty">' + (kind === 'day' ? 'まだ今日の記録はありません。一番乗りのチャンス' : 'まだ記録はありません') + '</li>'; return; }
   const me = (lsGet('moya_auth') || {}).uid;
-  ol.innerHTML = list.map((e, i) => `<li class="${e.u === me ? 'me' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(e.n)}<small>${(e.h / 10).toFixed(1)}cm × ${e.g}g</small></span><span class="sc">${e.s.toLocaleString()}</span><button class="pl" data-i="${i}" aria-label="${esc(e.n)}さんの盛り方を見る">▶</button></li>`).join('');
+  ol.innerHTML = list.map((e, i) => `<li class="${e.u === me ? 'me' : ''}"><span class="no">${i + 1}</span><span class="nm">${esc(e.n)}<small>${esc(rankName(e.s))}・${(e.h / 10).toFixed(1)}cm × ${e.g}g</small></span><span class="sc">${e.s.toLocaleString()}</span><button class="pl" data-i="${i}" aria-label="${esc(e.n)}さんの盛り方を見る">▶</button></li>`).join('');
   ol.querySelectorAll('.pl').forEach(b => b.onclick = () => playReplay(list[+b.dataset.i], kind));
 }
 $('#tabDay').onclick = () => showRank('day');
@@ -1339,7 +1347,7 @@ function showReplayEnd(en) {
   $('#hud').hidden = true; $('#rpBar').hidden = true; setHint('');
   $('#resCard').classList.remove('fail');
   $('#resHead').textContent = en.n + ' さんの一杯';
-  $('#resRank').textContent = rankName(en.g);
+  $('#resRank').textContent = rankName(en.s);
   $('#resLine').innerHTML = `高さ <b>${(en.h / 10).toFixed(1)}</b>cm × 重さ <b>${en.g}</b>g`;
   $('#resScore').innerHTML = `${en.s.toLocaleString()}<small>点</small>`;
   $('#resNote').textContent = '';
