@@ -263,6 +263,8 @@ const RAMEN_NAMES_L = {
     '사건의 지평선 숙주', '천지개벽 쌓기', '창세의 숙주', '혼돈을 다스리는 백', '숙주의 신', '극・숙주의 신', '종언의 숙주', '무한 쌓기', '진・숙주의 지로', '전설의 지로'],
 };
 function pickLang() {
+  const q = (() => { try { return new URLSearchParams(location.search).get('lang'); } catch (_) { return null; } })();
+  if (q && TX[q]) { try { localStorage.setItem('moya_lang', JSON.stringify(q)); } catch (_) { } return q; } // なすびのお庭から ?lang=xx で来たら、その言葉で始める
   const saved = (() => { try { return JSON.parse(localStorage.getItem('moya_lang')); } catch (_) { return null; } })();
   if (saved && TX[saved]) return saved;
   const n = (navigator.language || 'ja').toLowerCase();
